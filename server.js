@@ -7,9 +7,9 @@ const Action = require('./data/helpers/actionModel');
 
 server.use(express.json());
 
-server.use('/projects/:projectId/actions/:actionId', validateProjectId, validateActionId)
-server.use('/projects/:projectId', validateProjectId);
-server.use('/projects/:id/actions', actionRouter);
+server.use('/projects/:projectId', validateProjectId)
+server.use('/actions/:actionId', validateActionId);
+server.use('/actions', actionRouter);
 server.use('/projects', projectRouter);
 
 
@@ -27,7 +27,7 @@ server.get('/', async (req, res) => {
 });
 
 
-// MIDDLEWARE FUNCTIONS BELOW PLEASE USE YOUR CAUTION
+// MIDDLEWARE FUNCTIONS TO MAKE SURE NO FAKE PROJECT IDS OR ACTION IDS MAKE IT OUT OF THE GATE
 
 async function validateProjectId(req, res, next) {
   try {
@@ -58,6 +58,7 @@ async function validateActionId(req, res, next) {
 
     if (action) {
       req.action = action;
+      req.actionId = actionId;
       next();
     } else {
       res.status(400).json({

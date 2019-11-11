@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Project = require('./data/helpers/projectModel');
+const Action = require('./data/helpers/actionModel');
 
 // RETURNS PROJECT WITH SUBMITTED ID IF IT EXISTS
-router.get('/:id', async (req, res, project) => {
+router.get('/:id', async (req, res) => {
   try {
     const project = await req.project;
     res.status(200).json({ project });
@@ -12,6 +13,27 @@ router.get('/:id', async (req, res, project) => {
     res
       .status(500)
       .json({ success: false, message: "Server didn't serve." }, err);
+  }
+});
+
+// RETURNS ALL ACTIONS WITHIN A GIVEN PROJECT
+
+router.get('/:id/actions', async (req, res) => {
+  try {
+    const projectId = await req.projectId;
+    const projectActions = await Project.getProjectActions(projectId);
+    console.log(
+      `Returning actions for project ${projectId}: ${req.project.name}`
+    );
+    res.status(200).json({ projectActions });
+  } catch (err) {
+    console.log(err);
+    res
+      .status(500)
+      .json(
+        { success: false, message: "Server couldn't get those actions" },
+        err
+      );
   }
 });
 
@@ -26,14 +48,14 @@ router.post('/', async (req, res) => {
     console.log(err);
     res.status(500).json({
       success: false,
-      message: 'Server spit the darn thing back WAY out!'
+      message: 'Server spit the darn thing out!'
     });
   }
 });
 
 // DELETES PROJECT WITH THE GIVEN ID FROM THE DATABASE
 
-router.delete('/:id', async (req, res, project) => {
+router.delete('/:id', async (req, res) => {
   try {
     const id = await req.params.id;
     const project = req.project;
@@ -43,18 +65,14 @@ router.delete('/:id', async (req, res, project) => {
     console.log(
       `Project ${id}: "${project.name}" was successfully eradicated.`
     );
-    res
-      .status(200)
-      .json({
-        message: `Project ${id}: "${project.name}" was successfully eradicated.`
-      });
+    res.status(200).json({
+      message: `Project ${id}: "${project.name}" was successfully eradicated.`
+    });
   } catch (err) {
     console.log(err);
-    res
-      .status(500)
-      .json({
-        message: 'The server was not strong enough to destroy the project!'
-      });
+    res.status(500).json({
+      message: 'The server was not strong enough to destroy the project!'
+    });
   }
 });
 
@@ -62,7 +80,7 @@ router.delete('/:id', async (req, res, project) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const id = await req.params.id;
+    const id = req.params.id;
     const projectUpdate = await req.body;
 
     const updatedProject = await Project.update(id, projectUpdate);
@@ -80,26 +98,18 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// CUSTOM MIDDLEWARE TO CONFIRM PROJECT ID EXISTS IN DATABASE --------------------------
+// ADDS NEW ACTION TO EXISTING PROJECT. PROJECT ID AUTO POPULATED FROM REQ PARAM ADDED BY MIDDLEWARE
 
-// async function validateProjectId(req, res, next) {
-//   try {
-//     const projId = await req.params.id;
-//     const newProject = await Projects.get(projId);
-
-//     if (newProject) {
-//       req.project = newProject;
-//       next();
-//     } else {
-//       res.status(400).json({
-//         success: false,
-//         message: "Well taters! This project ain't in the sytem yet!"
-//       });
-//     }
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json({ message: 'Server Error' }, err);
-//   }
-// }
+router.post('/:id', async (req, res) => {
+  try {
+    const projectId = await req.projectId;
+    let actionBody = await req.body;
+    actionBody.project_id = projectId;
+    const newAction = await Action.insert(actionBody);
+    res.status(200).json(newAction);
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server failed' });
+  }
+});
 
 module.exports = router;
