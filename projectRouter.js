@@ -2,10 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Project = require('./data/helpers/projectModel');
 
-
-// USE ID VALIDATING MIDDLEWARE ON ALL /:id  REQUESTS
-// router.use('/:id', validateProjectId);
-
 // RETURNS PROJECT WITH SUBMITTED ID IF IT EXISTS
 router.get('/:id', async (req, res, project) => {
   try {
